@@ -1,5 +1,6 @@
 // Projekt Arduino-hc_05-elm327-car
 //
+//
 
 #include <LiquidCrystal.h> //Dołączenie bilbioteki od wyświetlacza 2x16
 LiquidCrystal lcd(2, 3, 4, 5, 6, 7); //Informacja o podłączeniu nowego wyświetlacza - piny do ktorych jest podlaczony
