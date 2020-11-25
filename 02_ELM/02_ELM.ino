@@ -5,8 +5,9 @@
 #include <LiquidCrystal.h> //Dołączenie bilbioteki od wyświetlacza 2x16
 LiquidCrystal lcd(3, 4, 5, 6, 7, 8); //Informacja o podłączeniu nowego wyświetlacza - piny do ktorych jest podlaczony
 
-#define ButtonPin 2
+#define ButtonPin 2 // PIN do którego podłączony jest przycisk
 
+//zmienne do obsługi odebranych komunikatów
 byte inData;
 char inChar;
 String BuildINString="";
@@ -17,20 +18,23 @@ long DisplayValue;
 long A;
 long B;
 
+// zmienne do liczenia czasu
 unsigned long aktualnyCzas = 0;
 unsigned long zapamietanyCzas = 0;
 unsigned long roznicaCzasu = 0;
 
+//flaga wskazująca zmianę trybu wyświetlania
 int flaga1 = 0;
-
+// tryb wyświetlania
 int tribe = 0;
 
 void setup() {
-  // put your setup code here, to run once:
 
+  // przerwanie od przycisku
   attachInterrupt(digitalPinToInterrupt(ButtonPin), button_func, RISING);
-  
+ 
   lcd.begin(16, 2); //Deklaracja typu wyświetlacza - 2x16
+  // Ekran startowy
   lcd.setCursor(0, 0); //Ustawienie kursora
   lcd.print("Czytnik ELM327"); //Wyświetlenie tekstu
   lcd.setCursor(0, 1); //Ustawienie kursora
@@ -38,62 +42,63 @@ void setup() {
   delay(2000);
   lcd.clear();
 
+// Zestawienie połączenia z ELM
     while(1){
-  lcd.setCursor(0, 0);
-  lcd.print("                    ");
-  lcd.setCursor(0, 1);
-  lcd.print("Connecting......    ");
-
-  Serial.begin(38400);   //initialize Serial 
-
-    Serial.println("ATZ"); // komenda AT 'reset all' - zasilanie zostanie wylaczone, a nastepnie ponownie wlaczone, wszystkie ustawienia wracaja do domyslnych
-  lcd.setCursor(0, 0);
-  lcd.print("ELM327 TZ    ");
-  delay(2000);
-   ReadData();
-
-                                              // If used substring(1,4)=="ATZ" needed a space before ATZ in Serial Monitor and it did not work
-  if (BuildINString.substring(1,3)=="TZ")    // MIATA RESPONSE TO ATZ IS ATZ[[[ELM327 V1.5  OR AT LEAST THAT IS WHAT ARDUINO HAS IN THE BUFFER
-    {
-      lcd.clear();
       lcd.setCursor(0, 0);
-      lcd.print("Welcome");
-      lcd.setCursor(9, 0);
-      //lcd.print(BuildINString);   //Echo response to screen "Welcome  ELM327"
+      lcd.print("                    ");
       lcd.setCursor(0, 1);
-      lcd.print("Connection OK         ");
-      delay(1500);
-      lcd.clear();
-      break;
-    }
-    else
-    {
+      lcd.print("Connecting......    ");
+    
+      Serial.begin(38400);   //initializazja uart z prędkością 38400
+    
+      Serial.println("ATZ"); // komenda AT 'reset all' - zasilanie zostanie wylaczone, a nastepnie ponownie wlaczone, wszystkie ustawienia wracaja do domyslnych
       lcd.setCursor(0, 0);
-      lcd.print("Error             ");
-      lcd.setCursor(0, 1);
-      lcd.print("No Connection!         ");
-      delay(1500);
-      lcd.clear();
-      }
+      lcd.print("ELM327 BT    ");
+      delay(2000);
+      
+       ReadData();// Czytaj UART
+    
+                                                  
+      if (BuildINString.substring(1,3)=="TZ")   // połączenie nawiązane poprawnie 
+        {
+          lcd.clear();
+          lcd.setCursor(0, 0);
+          lcd.print("Welcome         ");
+          lcd.setCursor(9, 0);
+          lcd.setCursor(0, 1);
+          lcd.print("Connection OK         ");
+          delay(1500);
+          lcd.clear();
+          break;
+        }
+        else // brak połączenia z ELM
+        {
+          lcd.setCursor(0, 0);
+          lcd.print("Error             ");
+          lcd.setCursor(0, 1);
+          lcd.print("No Connection!         ");
+          delay(1500);
+          lcd.clear();
+          }
     }
     
 
-  Serial.println("0100");          // wybor modulu 01 PID
-  lcd.setCursor(0, 0);
-  lcd.print("Initialzing.....");          
-  delay(4000);
-   ReadData();
-   lcd.setCursor(0, 0);            //Added 12-10-2016
-   lcd.print("Initialized.....");  //Added 12-10-2016
-   delay(1000);
-   lcd.clear();
+    Serial.println("0100");          // wybor modulu 01 poleceń PID
+    lcd.setCursor(0, 0);
+    lcd.print("Initialzing.....");          
+    delay(4000);
+    ReadData();
+    lcd.setCursor(0, 0);            
+    lcd.print("Initialized.....");  
+    delay(1000);
+    lcd.clear();
 
   
 }
 
 void loop() {
-  // put your main code here, to run repeatedly:
- // aktualnyCzas = millis(); // PObierz liczbę ms od startu
+
+  aktualnyCzas = millis(); // Pobierz liczbę ms od startu 
   
    switch(tribe){
      case 0:
@@ -140,22 +145,22 @@ void ReadData(){
 
 //--- TEMPERATURA PŁYNU CHŁODNICZEGO ---
 void coolant_temp(){
-  // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
-  lcd.setCursor(0, 0);
-  lcd.print("Coolant Temp   "); 
-  if(flaga1){
-    clean_down();
-    flaga1=0;
-  }
+    // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
+    lcd.setCursor(0, 0);
+    lcd.print("Coolant Temp   "); 
+    if(flaga1){
+      clean_down();
+      flaga1=0;
+    }
 
-  //resets the received string to NULL  Without it it repeated last string.
-  BuildINString = "";  
+    //resetowanie ostatniego stringa, bo zaraz przyjdzie nowy
+    BuildINString = "";  
 
-  Serial.println("0105");  // Send Coolant PID request 0105
+  Serial.println("0105");  //  Coolant temp PID - zapytanie 0105
   delay(1000);
 
-  // Receive complete string from the serial buffer
-  ReadData();  //replaced below code
+  // Odbieranie odpowiedzi na PID 0105
+  ReadData();  //Przypisanie ich do BuildINString
 
 
    // otrzymana wartoscc ma forme "41 05 98 3B A0 13" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
@@ -180,15 +185,12 @@ void input_temp(){
     flaga1=0;
   }
 
-  //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
 
   Serial.println("010F");  // Send Coolant PID request 0105
   delay(1000);
 
-  // Receive complete string from the serial buffer
-  ReadData();  //replaced below code
-
+  ReadData();  
 
    // otrzymana wartoscc ma forme "41 0F 2C" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6
   WorkingString = BuildINString.substring(5,7);   
@@ -213,7 +215,6 @@ void engine_rpm(){
     flaga1=0;
   }
 
-  //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
 
   Serial.println("010C");  // Send PID request 010C
@@ -250,15 +251,12 @@ void car_speed(){
     flaga1=0;
   }
 
-  //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
 
   Serial.println("010D");  // Send PID request 010D
   delay(1000);
 
-  // Receive complete string from the serial buffer
-  ReadData();  //replaced below code
-
+  ReadData(); 
 
    // otrzymana wartoscc ma forme "41 0D 00 41 0D 00" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
   WorkingString = BuildINString.substring(11,13);   
@@ -308,12 +306,14 @@ void engine_load(){
 }
 
 
-
 void button_func(){
-  flaga1 = 1;
-  if(tribe < 4 ) tribe++;
-  else tribe = 0;
-  delay(50);
+  roznicaCzasu = aktualnyCzas - zapamietanyCzas; // obliczanie czasu od ostatniego wciśnięcia przycisku
+  if (roznicaCzasu >= 100UL){
+    zapamietanyCzas = aktualnyCzas;
+    flaga1 = 1;
+    if(tribe < 4 ) tribe++;
+    else tribe = 0;
+  }
 }
 
 void clean_down(){
