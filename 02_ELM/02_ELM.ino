@@ -1,5 +1,5 @@
 // Projekt Arduino-hc_05-elm327-car
-//zmienić to paskudne goto~!
+// Autor:
 //
 
 #include <LiquidCrystal.h> //Dołączenie bilbioteki od wyświetlacza 2x16
@@ -12,8 +12,16 @@ char inChar;
 String BuildINString="";
 String DisplayString="";
 String WorkingString="";
+String WorkingString2="";
 long DisplayValue;
 long A;
+long B;
+
+unsigned long aktualnyCzas = 0;
+unsigned long zapamietanyCzas = 0;
+unsigned long roznicaCzasu = 0;
+
+int flaga1 = 0;
 
 int tribe = 0;
 
@@ -85,6 +93,8 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
+ // aktualnyCzas = millis(); // PObierz liczbę ms od startu
+  
    switch(tribe){
      case 0:
       coolant_temp();
@@ -133,6 +143,10 @@ void coolant_temp(){
   // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
   lcd.setCursor(0, 0);
   lcd.print("Coolant Temp   "); 
+  if(flaga1){
+    clean_down();
+    flaga1=0;
+  }
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -161,6 +175,10 @@ void input_temp(){
   // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
   lcd.setCursor(0, 0);
   lcd.print("Input Temp      "); 
+  if(flaga1){
+    clean_down();
+    flaga1=0;
+  }
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -190,6 +208,10 @@ void engine_rpm(){
   // wyswietlanie na wyswietlaczu aktualnych obrotów
   lcd.setCursor(0, 0);
   lcd.print("Engine RPM      ");
+  if(flaga1){
+    clean_down();
+    flaga1=0;
+  }
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -202,12 +224,15 @@ void engine_rpm(){
 
 
    // otrzymana wartoscc ma forme "41 0C 0B  D2 41 0C 0B D0" interesuje nas tylko ostatnie 4 cyfry, więc znaki nr 13, 14, 15, 16.
-  WorkingString = BuildINString.substring(13,17);   
+  WorkingString = BuildINString.substring(15,17);  
+  WorkingString2 = BuildINString.substring(13,15);
+  WorkingString2 +="00"  ;
 
    A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
+   B = strtol(WorkingString2.c_str(),NULL,16); 
 
-   //DisplayValue = long(A/4); // aby otrzymać wartość RPM, trzeba otrzymaną wartość podzielić przez 4
-   DisplayValue = A;
+   DisplayValue = long((A+B)/4); // aby otrzymać wartość RPM, trzeba otrzymaną wartość podzielić przez 4
+   //DisplayValue = A+B;
    DisplayString = String(DisplayValue) + "  RPM            ";  
    lcd.setCursor(0, 1);
    lcd.print(DisplayString); 
@@ -220,6 +245,10 @@ void car_speed(){
   // wyswietlanie na wyswietlaczu aktualnej prędkości pojazdu
   lcd.setCursor(0, 0);
   lcd.print("Car Speed       "); 
+  if(flaga1){
+    clean_down();
+    flaga1=0;
+  }
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -249,6 +278,10 @@ void engine_load(){
   // wyswietlanie na wyswietlaczu aktualnego obciążenia silnika
   lcd.setCursor(0, 0);
   lcd.print("Engine Load    "); 
+  if(flaga1){
+    clean_down();
+    flaga1=0;
+  }
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -265,8 +298,8 @@ void engine_load(){
 
    A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
 
-  // DisplayValue = int((A/255)*100); // aby otrzymać % obciazenia, dzielimy otrzymana wartosc przez wartosci max (FF = 255) i mnozymy *100%
-   DisplayValue = A;
+   DisplayValue = int((A/255)*100); // aby otrzymać % obciazenia, dzielimy otrzymana wartosc przez wartosci max (FF = 255) i mnozymy *100%
+  // DisplayValue = A;
    DisplayString = String(DisplayValue) + " %            ";  
    lcd.setCursor(0, 1);
    lcd.print(DisplayString); 
@@ -277,8 +310,13 @@ void engine_load(){
 
 
 void button_func(){
-  lcd.clear();
+  flaga1 = 1;
   if(tribe < 4 ) tribe++;
   else tribe = 0;
-  delay(20);
+  delay(50);
+}
+
+void clean_down(){
+  lcd.setCursor(0, 1);
+  lcd.print("                ");
 }
