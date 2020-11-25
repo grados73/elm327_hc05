@@ -30,44 +30,6 @@ void setup() {
   delay(2000);
   lcd.clear();
 
-//  Retry:
-//  lcd.setCursor(0, 0);
-//  lcd.print("                    ");
-//  lcd.setCursor(0, 1);
-//  lcd.print("Connecting......    ");
-//
-//  Serial.begin(38400);   //initialize Serial 
-//
-//    Serial.println("ATZ"); // komenda AT 'reset all' - zasilanie zostanie wylaczone, a nastepnie ponownie wlaczone, wszystkie ustawienia wracaja do domyslnych
-//  lcd.setCursor(0, 0);
-//  lcd.print("ELM327 TZ    ");
-//  delay(2000);
-//   ReadData();
-//
-//                                              // If used substring(1,4)=="ATZ" needed a space before ATZ in Serial Monitor and it did not work
-//  if (BuildINString.substring(1,3)=="TZ")    // MIATA RESPONSE TO ATZ IS ATZ[[[ELM327 V1.5  OR AT LEAST THAT IS WHAT ARDUINO HAS IN THE BUFFER
-//    {
-//      lcd.clear();
-//      lcd.setCursor(0, 0);
-//      lcd.print("Welcome");
-//      lcd.setCursor(9, 0);
-//      //lcd.print(BuildINString);   //Echo response to screen "Welcome  ELM327"
-//      lcd.setCursor(0, 1);
-//      lcd.print("Connection OK         ");
-//      delay(1500);
-//      lcd.clear();
-//    }
-//    else
-//    {
-//      lcd.setCursor(0, 0);
-//      lcd.print("Error             ");
-//      lcd.setCursor(0, 1);
-//      lcd.print("No Connection!         ");
-//      delay(1500);
-//      lcd.clear();
-//      goto Retry;
-//    }
-
     while(1){
   lcd.setCursor(0, 0);
   lcd.print("                    ");
@@ -170,7 +132,7 @@ void ReadData(){
 void coolant_temp(){
   // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
   lcd.setCursor(0, 0);
-  lcd.print("Coolant Temp    "); 
+  lcd.print("Coolant Temp   "); 
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -198,7 +160,7 @@ void coolant_temp(){
 void input_temp(){
   // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
   lcd.setCursor(0, 0);
-  lcd.print("Input Temp    "); 
+  lcd.print("Input Temp      "); 
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -227,7 +189,7 @@ void input_temp(){
 void engine_rpm(){
   // wyswietlanie na wyswietlaczu aktualnych obrotów
   lcd.setCursor(0, 0);
-  lcd.print("Engine RPM    "); 
+  lcd.print("Engine RPM      ");
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
@@ -239,13 +201,14 @@ void engine_rpm(){
   ReadData();  //replaced below code
 
 
-   // otrzymana wartoscc ma forme "41 0C 0B  D2 41 0C 0B D0" interesuje nas tylko ostatnie 4 cyfry, więc znaki nr 5, 6, 7, 8.
-  WorkingString = BuildINString.substring(5,9);   
+   // otrzymana wartoscc ma forme "41 0C 0B  D2 41 0C 0B D0" interesuje nas tylko ostatnie 4 cyfry, więc znaki nr 13, 14, 15, 16.
+  WorkingString = BuildINString.substring(13,17);   
 
    A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
 
-   DisplayValue = int(A/4); // aby otrzymać wartość RPM, trzeba otrzymaną wartość podzielić przez 4
-   DisplayString = String(DisplayValue) + " RPM            ";  
+   //DisplayValue = long(A/4); // aby otrzymać wartość RPM, trzeba otrzymaną wartość podzielić przez 4
+   DisplayValue = A;
+   DisplayString = String(DisplayValue) + "  RPM            ";  
    lcd.setCursor(0, 1);
    lcd.print(DisplayString); 
    delay(500);
@@ -256,7 +219,7 @@ void engine_rpm(){
 void car_speed(){
   // wyswietlanie na wyswietlaczu aktualnej prędkości pojazdu
   lcd.setCursor(0, 0);
-  lcd.print("Car Speed    "); 
+  lcd.print("Car Speed       "); 
 
   //resets the received string to NULL  Without it it repeated last string.
   BuildINString = "";  
