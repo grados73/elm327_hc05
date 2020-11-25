@@ -13,6 +13,8 @@ String WorkingString="";
 long DisplayValue;
 long A;
 
+int tribe = 0;
+
 void setup() {
   // put your setup code here, to run once:
   lcd.begin(16, 2); //Deklaracja typu wyświetlacza - 2x16
@@ -31,7 +33,7 @@ void setup() {
 
   Serial.begin(38400);   //initialize Serial 
 
-    Serial.println("ATZ");
+    Serial.println("ATZ"); // komenda AT 'reset all' - zasilanie zostanie wylaczone, a nastepnie ponownie wlaczone, wszystkie ustawienia wracaja do domyslnych
   lcd.setCursor(0, 0);
   lcd.print("ELM327 TZ    ");
   delay(2000);
@@ -61,9 +63,9 @@ void setup() {
       goto Retry;
     }
 
-     Serial.println("0100");          // Works with This  only
+     Serial.println("0100");          // wybor modulu 01 PID
   lcd.setCursor(0, 0);
-  lcd.print("Initialzing.....");          //Initialize BUS  //lcd.print("0100 Sent"); 
+  lcd.print("Initialzing.....");          
   delay(4000);
    ReadData();
    lcd.setCursor(0, 0);            //Added 12-10-2016
@@ -76,55 +78,7 @@ void setup() {
 
 void loop() {
   // put your main code here, to run repeatedly:
-   
-   
-// Added to display Coolant Temp
-  lcd.setCursor(0, 0);
-  lcd.print("Coolant Temp    "); 
-
-
-  //resets the received string to NULL  Without it it repeated last string.
-  BuildINString = "";  
-
-  Serial.println("0105");  // Send Coolant PID request 0105
-  //Serial.flush();         //Not sure if it's needed*********************************************
-  delay(1000);
-
-  // Receive complete string from the serial buffer
-  ReadData();  //replaced below code
-
-
-// Parse the received string, retrieve only the hex value for temperature  Example: 32 is the 11 and 12th character
-// 0105[41 05 32   Correct value reading back  10 degrees. (11,13 or even 11,14 works)
-WorkingString = BuildINString.substring(11,13);   
-
-    A = strtol(WorkingString.c_str(),NULL,16);  //convert hex to decimnal
-
-   DisplayValue = A;
-   DisplayString = String(DisplayValue - 40) + " C            ";  // Subtract 40 from decimal to get the right temperature
-   lcd.setCursor(0, 1);
-   lcd.print(DisplayString); 
-   delay(500);
-
-//Check if if over 100 C ******************************************************
-int B;
-B = DisplayString.toInt();  //Convert String to Integer  .toInt()
-
-
-   if (B >= 100){     //Check if if over 100 C
-    
-// ------- Quick 3 blinks of backlight  -------------
-  for(int i = 0; i< 3; i++)
-  {
-    lcd.display();   //For I2C use lcd.backlight
-    delay(250);
-    lcd.noDisplay(); //For I2C use lcd.noBacklight
-    delay(250);
-  }
-  lcd.display(); // finish with backlight on   //For I2C use lcd.backlight
-   }
- 
-
+   coolant_temp();
 }
 
 //Read Data Function ***********************************************************
@@ -139,4 +93,32 @@ BuildINString="";
     inChar=char(inData);
     BuildINString = BuildINString + inChar;
   }
+}
+
+void coolant_temp(){
+  // wyswietlanie na wyswietlaczu aktualnej temperatury płynu chłodzącego
+  lcd.setCursor(0, 0);
+  lcd.print("Coolant Temp    "); 
+
+  //resets the received string to NULL  Without it it repeated last string.
+  BuildINString = "";  
+
+  Serial.println("0105");  // Send Coolant PID request 0105
+  delay(1000);
+
+  // Receive complete string from the serial buffer
+  ReadData();  //replaced below code
+
+
+   // otrzymana wartoscc ma forme "41 05 98 3B A0 13" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
+  WorkingString = BuildINString.substring(11,13);   
+
+    A = strtol(WorkingString.c_str(),NULL,16);  //convert hex to decimnal
+
+   DisplayValue = A;
+   DisplayString = String(DisplayValue - 40) + " C            ";  // Subtract 40 from decimal to get the right temperature
+   lcd.setCursor(0, 1);
+   lcd.print(DisplayString); 
+   delay(500);
+  
 }
