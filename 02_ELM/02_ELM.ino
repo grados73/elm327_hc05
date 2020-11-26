@@ -71,6 +71,9 @@ void setup() {
       delay(3000);
       
        ReadData();// Czytaj UART
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+       SoftSerialOne.print("\nOdpowiez na ATZ BuildINSTRING: ");
+       SoftSerialOne.print(BuildINString);
     
                                                   
       if (BuildINString.substring(1,3)=="TZ")   // połączenie nawiązane poprawnie 
@@ -92,23 +95,25 @@ void setup() {
           lcd.setCursor(0, 1);
           lcd.print("No Connection!         ");
           SoftSerialOne.print("\nNO CONNECTION ");
+          SoftSerialOne.print("\nodpowiedz na ATZ BuildINSTRING: ");
+          SoftSerialOne.print(BuildINString.substring(0,3));
           delay(1500);
           lcd.clear();
           }
     }
     
-
+  
     Serial.println("0100");          // wybor modulu 01 poleceń PID
     lcd.setCursor(0, 0);
     lcd.print("Initialzing.....");          
     delay(2000);
     ReadData();
-    lcd.setCursor(0, 0);            
-    lcd.print("Initialized.....");  
+    
+//!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+  
     delay(1000);
     lcd.clear();
-
-  
+    
 }
 
 void loop() {

@@ -305,9 +305,11 @@ void ReadData(){
         ReadData(); 
       
          // otrzymana wartoscc ma forme "010D41 0D 00 41 0D 00" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
-        WorkingString = BuildINString.substring(11,13);  
+          WorkingString = BuildINString.substring(11,13); 
+          A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int/ .c_str()
+         DisplayValue = A; 
       
-         DisplayString = WorkingString + " km/h            ";  
+         DisplayString = String(DisplayValue) + " km/h            ";  
          lcd.setCursor(0, 1);
          lcd.print(DisplayString); 
          delay(100);
