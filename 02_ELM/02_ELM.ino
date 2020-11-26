@@ -5,6 +5,12 @@
 #include <LiquidCrystal.h> //Dołączenie bilbioteki od wyświetlacza 2x16
 LiquidCrystal lcd(3, 4, 5, 6, 7, 8); //Informacja o podłączeniu nowego wyświetlacza - piny do ktorych jest podlaczony
 
+#include <SoftwareSerial.h>
+const int RX1 = 12;
+const int TX1 = 13;
+SoftwareSerial SoftSerialOne(RX1,TX1);
+
+
 #define ButtonPin 2 // PIN do którego podłączony jest przycisk
 
 //zmienne do obsługi odebranych komunikatów
@@ -17,6 +23,8 @@ String WorkingString2="";
 long DisplayValue;
 long A;
 long B;
+float F;
+float F2;
 
 // zmienne do liczenia czasu
 unsigned long aktualnyCzas = 0;
@@ -29,6 +37,10 @@ int flaga1 = 0;
 int tribe = 0;
 
 void setup() {
+
+  pinMode(RX1, INPUT);
+  pinMode(TX1, OUTPUT);
+  SoftSerialOne.begin(9600);
 
   // przerwanie od przycisku
   attachInterrupt(digitalPinToInterrupt(ButtonPin), button_func, RISING);
@@ -48,13 +60,15 @@ void setup() {
       lcd.print("                    ");
       lcd.setCursor(0, 1);
       lcd.print("Connecting......    ");
-    
+      SoftSerialOne.print("\nConecting ");
+        
+
       Serial.begin(38400);   //initializazja uart z prędkością 38400
     
       Serial.println("ATZ"); // komenda AT 'reset all' - zasilanie zostanie wylaczone, a nastepnie ponownie wlaczone, wszystkie ustawienia wracaja do domyslnych
       lcd.setCursor(0, 0);
       lcd.print("ELM327 BT    ");
-      delay(2000);
+      delay(3000);
       
        ReadData();// Czytaj UART
     
@@ -77,6 +91,7 @@ void setup() {
           lcd.print("Error             ");
           lcd.setCursor(0, 1);
           lcd.print("No Connection!         ");
+          SoftSerialOne.print("\nNO CONNECTION ");
           delay(1500);
           lcd.clear();
           }
@@ -86,7 +101,7 @@ void setup() {
     Serial.println("0100");          // wybor modulu 01 poleceń PID
     lcd.setCursor(0, 0);
     lcd.print("Initialzing.....");          
-    delay(4000);
+    delay(2000);
     ReadData();
     lcd.setCursor(0, 0);            
     lcd.print("Initialized.....");  
@@ -172,7 +187,7 @@ void ReadData(){
         // Odbieranie odpowiedzi na AT RV
         ReadData();  //Przypisanie ich do BuildINString
       
-         DisplayString = BuildINString;   
+         DisplayString = BuildINString.substring(6,11); // od 5 do 8  
       
          DisplayString = (DisplayString) + "          ";  
          lcd.setCursor(0, 1);
@@ -204,7 +219,11 @@ void ReadData(){
       
       
          // otrzymana wartoscc ma forme "41 05 98 3B A0 13" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
-        WorkingString = BuildINString.substring(11,13);   
+        WorkingString = BuildINString.substring(11,13); 
+        SoftSerialOne.print("\notemp chlodn BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);
+        SoftSerialOne.print(" temp chlod WorkingString: ");
+        SoftSerialOne.print(WorkingString);  
       
           A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int/ .c_str() konwertuje str na ciąg, który może być zapisany w tablicy znaków
       
@@ -234,8 +253,12 @@ void ReadData(){
       
         ReadData();  
       
-         // otrzymana wartoscc ma forme "41 0F 2C" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6
-        WorkingString = BuildINString.substring(5,7);   
+         // otrzymana wartoscc ma forme "41 0F 2C" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6 !! 11 i 12
+        WorkingString = BuildINString.substring(11,13);  
+        SoftSerialOne.print("\ntemperatura wlotowa BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);
+        SoftSerialOne.print(" temp wlot WorkingString: ");
+        SoftSerialOne.print(WorkingString); 
       
           A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int/ .c_str() konwertuje str na ciąg, który może być zapisany w tablicy znaków
       
@@ -267,15 +290,24 @@ void ReadData(){
         ReadData();  //replaced below code
       
       
-         // otrzymana wartoscc ma forme "41 0C 0B  D2 41 0C 0B D0" interesuje nas tylko ostatnie 4 cyfry, więc znaki nr 13, 14, 15, 16.
-        WorkingString = BuildINString.substring(13,15);  
-        WorkingString2 = BuildINString.substring(15,17);
+         // otrzymana wartoscc ma forme "41 0C 0B  D2 41 0C 0B D0" interesuje nas tylko ostatnie 4 cyfry, więc znaki nr 5, 6, 7 i 8. !! 15 16 18 19
+        WorkingString = BuildINString.substring(11,13);  // bardziej znaczacy
+        WorkingString2 = BuildINString.substring(14, 16);
+        SoftSerialOne.print("\nobroty BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);
+        SoftSerialOne.print(" obroty WorkingString: ");
+        SoftSerialOne.print(WorkingString);
+        SoftSerialOne.print(" obroty WorkingString2: ");
+        SoftSerialOne.print(WorkingString2);
         
       //konwersja z stringa ( w notacji HEX = 16) do long int
          A = strtol(WorkingString.c_str(),NULL,16); // bardziej znaczacy bajt
          B = strtol(WorkingString2.c_str(),NULL,16); // mniej znaczacy bajt
+
+         F= float(A);
+         F2= float(B);
       
-         DisplayValue = long((256*A+B)/4); // wzor na wartosc RPM
+         DisplayValue = long((256.0*F+F2)/4.0); // wzor na wartosc RPM
          DisplayString = String(DisplayValue) + "  RPM            ";  
          lcd.setCursor(0, 1);
          lcd.print(DisplayString); 
@@ -301,15 +333,16 @@ void ReadData(){
         ReadData(); 
       
          // otrzymana wartoscc ma forme "41 0D 00 41 0D 00" interesuje nas tylko ostatnia para cyfr, więc znaki nr 11 i 12
-        WorkingString = BuildINString.substring(11,13);   
+        WorkingString = BuildINString.substring(11,13);  
+        SoftSerialOne.print("\npredkosc BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);
+        SoftSerialOne.print(" predkosc WorkingString: ");
+        SoftSerialOne.print(WorkingString); 
       
-         A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
-      
-         DisplayValue = A; // 
-         DisplayString = String(DisplayValue) + " km/h            ";  
+         DisplayString = WorkingString + " km/h            ";  
          lcd.setCursor(0, 1);
          lcd.print(DisplayString); 
-         delay(500);
+         delay(100);
         
       }
 //---------------------------------------------------------------------------------------------------------------------------------------------------------------      
@@ -333,17 +366,22 @@ void ReadData(){
         ReadData();  //replaced below code
       
       
-         // otrzymana wartoscc ma forme "41 04 74" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6
-        WorkingString = BuildINString.substring(5,7);   
+         // otrzymana wartoscc ma forme "41 04 74" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6 !! 10 i 11
+        WorkingString = BuildINString.substring(11,13);  
+        SoftSerialOne.print("\nobciązenie BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);
+        SoftSerialOne.print("obciązenie WorkingString: ");
+        SoftSerialOne.print(WorkingString) ;
       
          A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
-      
-         DisplayValue = int(100.0*A/255.0); // aby otrzymać % obciazenia, dzielimy otrzymana wartosc przez wartosci max (FF = 255) i mnozymy *100%
+         F= float(A);
+         
+         DisplayValue = long(100.0*F/255.0); // aby otrzymać % obciazenia, dzielimy otrzymana wartosc przez wartosci max (FF = 255) i mnozymy *100%
         // DisplayValue = A;
          DisplayString = String(DisplayValue) + " %            ";  
          lcd.setCursor(0, 1);
          lcd.print(DisplayString); 
-         delay(500);
+         delay(100);
         
       }
 
@@ -366,12 +404,18 @@ void ReadData(){
       
         ReadData(); 
       
-         // otrzymana wartoscc ma forme "41 2F 90" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6
-        WorkingString = BuildINString.substring(5,7);   
+         // otrzymana wartoscc ma forme "41 2F 90" interesuje nas tylko ostatnia para cyfr, więc znaki nr 5 i 6 !! 11 i 12
+        WorkingString = BuildINString.substring(11,13);
+        SoftSerialOne.print("\n poziom paliwa BuildINSTRING: ");
+        SoftSerialOne.print(BuildINString);   
+        SoftSerialOne.print("poziom paliwa WorkingString: ");
+        SoftSerialOne.print(WorkingString);
       
          A = strtol(WorkingString.c_str(),NULL,16);  //konwersja z stringa ( w notacji HEX = 16) do long int
+          F= float(A);
+          
       
-         DisplayValue = long(100*A/256); // 
+         DisplayValue = long(100.0*F/256.0); // 
          DisplayString = String(DisplayValue) + " %            ";  
          lcd.setCursor(0, 1);
          lcd.print(DisplayString); 
@@ -383,10 +427,10 @@ void ReadData(){
       
       void button_func(){
         roznicaCzasu = aktualnyCzas - zapamietanyCzas; // obliczanie czasu od ostatniego wciśnięcia przycisku
-        if (roznicaCzasu >= 100UL){
+        if (roznicaCzasu >= 1000UL){ // przelaczanie trybu max co 500ms
           zapamietanyCzas = aktualnyCzas;
           flaga1 = 1;
-          if(tribe < 4 ) tribe++;
+          if(tribe < 6 ) tribe++;
           else tribe = 0;
         }
       }
