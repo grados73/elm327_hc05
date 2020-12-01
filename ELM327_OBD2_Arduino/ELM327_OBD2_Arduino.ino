@@ -2,8 +2,10 @@
 // Autor:
 //
 
-#include <LiquidCrystal.h> //Dołączenie bilbioteki od wyświetlacza 2x16
-LiquidCrystal lcd(3, 4, 5, 6, 7, 8); //Informacja o podłączeniu nowego wyświetlacza - piny do ktorych jest podlaczony
+#include <Wire.h>   // standardowa biblioteka Arduino
+#include <LiquidCrystal_I2C.h> // dolaczenie pobranej biblioteki I2C dla LCD
+
+LiquidCrystal_I2C lcd(0x27, 16, 2);
 
 #define ButtonPin 2 // PIN do którego podłączony jest przycisk
 
@@ -37,6 +39,7 @@ void setup() {
   attachInterrupt(digitalPinToInterrupt(ButtonPin), button_func, RISING);
  
   lcd.begin(16, 2); //Deklaracja typu wyświetlacza - 2x16
+  lcd.backlight(); // zalaczenie podwietlenia 
   // Ekran startowy
   lcd.setCursor(0, 0); //Ustawienie kursora
   lcd.print("Czytnik ELM327"); //Wyświetlenie tekstu
