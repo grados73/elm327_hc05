@@ -1,5 +1,5 @@
 # ELM327 & HC-05
->The aim of this project was to read data from any car`s CAN bus, and display it on LCD with possibly low delay.
+>The aim of this project was to read data from any car`s CAN bus using OBDII, and display it on LCD with possibly low delay.
 
 ## Table of contents
 * [General info](#general-info)
@@ -10,11 +10,11 @@
 * [Contact](#contact)
 
 ## General info
-Older cars that support CAN standard have a lot of knowledge about current car condition which don`t show us, but we can read them and display the ones that interest us.
+Older cars that support OBDII standard have a lot of knowledge about current car condition which don`t show us, but we can read them and display the ones that interest us.
 
 
 ## Screenshots
-WILL BE ADDED
+![LCD1](./Images/LCD.bmp)
 
 ## Technologies
 C,
@@ -23,7 +23,7 @@ Bluetooth,
 CAN.
 
 ## Code Examples
-WILL BE ADDED
+![Code](./Images/kod.bmp)
 
 ## Features
 Display:
