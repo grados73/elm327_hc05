@@ -10,7 +10,7 @@
 * [Contact](#contact)
 
 ## General info
-Older cars that support OBDII standard have a lot of knowledge about current car condition which don`t show us, but we can read them and display the ones that interest us.
+Older cars that support OBDII standard have a lot of data about current car condition which aren't shown to us, but we can read them all and display the ones that interest us.
 
 
 ## Screenshots
